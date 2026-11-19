@@ -1,6 +1,6 @@
 # P1-01 MaiBot / SDK 版本与宿主加载验证记录
 
-> 状态：**部分完成，P1-01 保持未勾选**。版本目标和验证步骤已锁定；当前生产宿主的已安装版本、配置解析和插件加载尚未取得可复核的现场输出。
+> 状态：**部分完成，P1-01 保持未勾选**。版本目标、生产实际版本、配置解析和隔离加载已取得可复核证据；生产插件发现/注册和真实 Hook 执行证据仍缺失。
 >
 > 记录日期：2026-11-19
 
@@ -8,7 +8,7 @@
 
 | 项目 | 锁定目标 | 已核实证据 | 边界 |
 |---|---|---|---|
-| MaiBot | `v1.4.5` | 上游 release：<https://github.com/Mai-with-u/MaiBot/releases/tag/v1.4.5>；GitHub CLI 查询该 tag 成功 | 已核对公开上游版本，不等于当前 NAS 容器已安装该版本 |
+| MaiBot | `v1.4.5` | 上游 release：<https://github.com/Mai-with-u/MaiBot/releases/tag/v1.4.5>；GitHub CLI 查询该 tag 成功；生产容器现场核验见第 4 节 | 上游版本与生产现场证据分别记录，不能仅凭 tag 推断宿主状态 |
 | MaiBot SDK | `v2.23.0` 作为本轮验证基线 | SDK release：<https://github.com/Mai-with-u/maibot-plugin-sdk/releases/tag/v2.23.0>；MaiBot `v1.4.5` 的 `pyproject.toml` 与 `requirements.txt` 均声明 `maibot-plugin-sdk>=2.23.0` | 这是上游下限约束，不证明当前宿主实际安装版本；验证环境应固定 `==2.23.0` 后再测 |
 | 插件兼容性声明 | `_manifest.json` 的 SDK `min_version` 为 `2.20.0` | 仓库文件已读回 | 这是插件声明的兼容下限，不替代本轮目标 SDK `2.23.0` |
 
@@ -50,29 +50,27 @@ python -m unittest discover -s tests -p 'test_hook_runtime_e2e.py' -v
 
 README 已记录同一套环境变量和安全边界；普通 unittest/CI 默认不会发起 SSH 连接。
 
-## 4. 当前证据与阻塞
+## 4. 当前证据与残差
 
-已验证：
+已验证（2026-11-19，生产只读探测）：
 
-- MaiBot `v1.4.5` release 存在；其源码依赖明确为 `maibot-plugin-sdk>=2.23.0`。
-- SDK `v2.23.0` release 存在。
-- 本仓库的 opt-in E2E 入口、fixture、Paramiko 可选依赖和严格 `known_hosts` 策略已存在。
-- 历史会话搜索发现过 `E2E_PASS` 相关记录，但当前可回读内容主要是测试代码和执行计划，未取得包含完整 `loaded`、`registered`、`production_unchanged` 值的原始运行输出；因此不把它作为本轮独立验收结论。
+- `[[redacted]]:1988` 的实时 ED25519 指纹为 `[redacted]`，与本机 `known_hosts` 完全匹配；Paramiko 使用 `RejectPolicy` 严格认证成功。
+- 生产容器 `maibot-core` 当前为 `running/healthy`，重启次数为 `0`；镜像 ID 为 `sha256:7d1474653b86216655194c34d8ac880493a73e2160e1cab0c2afd7a7975b2a5b`。
+- 容器内 `/MaiMBot/.venv` 的 Python 为 `3.13.16`，实际安装 `maibot-plugin-sdk==2.23.0`；生产镜像/配置目标为 MaiBot `v1.4.5`。
+- 已部署插件根目录包含 `plugin.py`、`deai.py`、`_manifest.json`、`config.toml`；manifest 和 TOML 配置解析成功，Python 语法检查成功。
+- 针对该 NAS 和 `sengokucola/maibot:v1.4.5` 的 opt-in 隔离 E2E 已重新运行：`1` 个测试通过，耗时约 `22.034s`；测试断言包含 Runner/Registry/HookDispatcher 注册、Hook 分发、隔离限制、清理和生产容器状态前后一致。运行后未残留 `mai-hook-e2e` 容器。
 
-尚未验证：
+仍有残差：
 
-- 当前生产 `maibot-core` 镜像实际对应的 MaiBot 版本；
-- 当前宿主实际安装的 `maibot-plugin-sdk` 版本；
-- 生产配置解析、插件发现/注册和真实 Hook 加载日志；
-- 当前宿主上的隔离 E2E 重新运行结果。
+- 当前生产日志检索未找到 `inkichang.deai-filter` 或该插件注册的明确日志标识。因此，虽然文件存在且隔离运行成功，尚不能证明生产 MaiBot 已发现、注册并实际执行该插件。
+- 本轮没有执行生产重启、热加载或真实聊天 Hook；没有读取秘密配置内容，也没有改变生产容器。
 
-阻塞原因：本机 Paramiko 连接因目标 `[[redacted]]:1988` 不在系统 `known_hosts` 中而按设计拒绝；`ssh-keyscan` 又被本机客户端与服务端的 KEX 兼容性问题阻断。本轮没有可验证的主机指纹，因此没有绕过校验、没有读取或写入生产配置，也没有改变生产容器。
+因此 P1-01 继续保持未勾选：版本、SDK、配置解析和隔离加载验证已完成，但生产插件发现/注册证据仍缺失。
 
 ## 5. P1-01 完成条件
 
-只有以下证据齐全后，才将 `TASKS.md` 的 P1-01 改为 `[x]`：
+将 `TASKS.md` 的 P1-01 改为 `[x]` 前，还需取得以下最后一项证据：
 
-1. 记录宿主镜像 digest、MaiBot `1.4.5` 和实际 SDK 版本；
-2. 记录脱敏的配置解析成功与插件发现/注册日志；
-3. 运行 opt-in 隔离 E2E，保存 `E2E_PASS`、注册数量、Hook 结果和 `production_unchanged=true` 的脱敏证据；
-4. 明确真实生产加载是否完成；若只完成隔离 E2E，P1-01 仍不可宣称生产接入完成。
+1. 从生产 MaiBot 启动或插件管理日志中取得脱敏的插件发现/注册成功记录，并确认对应 Hook 已加载；
+2. 若需要热加载或重启，先取得授权窗口并记录生产容器状态前后无异常；
+3. 不把仅有隔离 E2E、文件存在或配置可解析误写成生产接入完成。
