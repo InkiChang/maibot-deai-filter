@@ -2,145 +2,145 @@
   "collected_date": "2026-11-19",
   "plugin_id": "inkichang.deai-filter",
   "production_log_root": "/MaiMBot/bots/<bot_id>/logs",
-  "container_state": "[redacted]|sha256:7d1474653b86216655194c34d8ac880493a73e2160e1cab0c2afd7a7975b2a5b|0|running|healthy|2026-11-17T05:58:06.17470796Z",
+  "container_state": "[redacted-container-id]|[redacted-image-digest]|0|running|healthy|[redacted-start-time]",
   "records": [
     {
-      "file": "[redacted]",
+      "file": "[redacted-production-log-file]",
       "line": 343,
-      "timestamp": "2026-11-17T05:58:31.151974Z",
+      "timestamp": "[redacted]",
       "logger": null,
       "event": "插件 inkichang.deai-filter v0.1.0 加载成功"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-production-log-file]",
       "line": 350,
-      "timestamp": "2026-11-17T05:58:31.161299Z",
+      "timestamp": "[redacted]",
       "logger": null,
       "event": "已为插件 inkichang.deai-filter 注入 PluginContext"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-production-log-file]",
       "line": 360,
-      "timestamp": "2026-11-17T05:58:31.353237Z",
+      "timestamp": "[redacted]",
       "logger": null,
       "event": "插件 inkichang.deai-filter 注册完成"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-production-log-file]",
       "line": 361,
-      "timestamp": "2026-11-17T05:58:31.354280Z",
+      "timestamp": "[redacted]",
       "logger": null,
       "event": "DeAI Filter 0.1.0 已加载（maisaka.reply.after_split）"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 59,
-      "timestamp": "11-17 13:58:30",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_import:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 60,
-      "timestamp": "11-17 13:58:30",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_import:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.051s outcome=completed"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 61,
-      "timestamp": "11-17 13:58:30",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_create:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 62,
-      "timestamp": "11-17 13:58:30",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_create:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.001s outcome=completed"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 63,
-      "timestamp": "11-17 13:58:30",
+      "timestamp": "[redacted]",
       "logger": "plugin_runtime.runner.plugin_loader",
       "event": "插件 inkichang.deai-filter v0.1.0 加载成功"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 120,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_config:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 121,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "plugin_runtime.runner.main",
       "event": "已为插件 inkichang.deai-filter 注入 PluginContext"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 122,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_config:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.005s outcome=completed"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 139,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_bootstrap:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 152,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_bootstrap:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.025s outcome=completed"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 153,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_register:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 156,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "plugin_runtime.runner.main",
       "event": "插件 inkichang.deai-filter 注册完成"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 157,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_register:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.012s outcome=completed"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 158,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段开始: stage=runner.plugin_on_load:inkichang.deai-filter pid=36 thread=MainThread"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 159,
-      "timestamp": "2026-11-17T05:58:31.191650Z",
+      "timestamp": "[redacted]",
       "logger": null,
       "event": "DeAI Filter 0.1.0 已加载（maisaka.reply.after_split）"
     },
     {
-      "file": "[redacted]",
+      "file": "[redacted-runner-log-file]",
       "line": 160,
-      "timestamp": "11-17 13:58:31",
+      "timestamp": "[redacted]",
       "logger": "startup_diagnostics",
       "event": "诊断阶段结束: stage=runner.plugin_on_load:inkichang.deai-filter pid=36 thread=MainThread 耗时=0.004s outcome=completed"
     }

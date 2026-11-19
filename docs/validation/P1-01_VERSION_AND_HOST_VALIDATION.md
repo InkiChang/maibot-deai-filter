@@ -54,8 +54,8 @@ README 已记录同一套环境变量和安全边界；普通 unittest/CI 默认
 
 已验证（2026-11-19，生产只读探测）：
 
-- `[[redacted]]:1988` 的实时 ED25519 指纹为 `[redacted]`，与本机 `known_hosts` 完全匹配；Paramiko 使用 `RejectPolicy` 严格认证成功。
-- 生产容器 `maibot-core` 当前为 `running/healthy`，重启次数为 `0`；镜像 ID 为 `sha256:7d1474653b86216655194c34d8ac880493a73e2160e1cab0c2afd7a7975b2a5b`。
+- 已授权的生产只读探测确认实时ED25519指纹与用户提供的 `known_hosts` 条目匹配；具体主机、端口、用户名和指纹不保存在公开证据。
+- 生产MaiBot容器在当时只读探测中为 `running/healthy`，重启次数为 `0`；具体容器ID和镜像摘要不保存在公开证据。
 - 容器内 `/MaiMBot/.venv` 的 Python 为 `3.13.16`，实际安装 `maibot-plugin-sdk==2.23.0`；生产镜像/配置目标为 MaiBot `v1.4.5`。
 - 已部署插件根目录包含 `plugin.py`、`deai.py`、`_manifest.json`、`config.toml`；manifest 和 TOML 配置解析成功，Python 语法检查成功。
 - 针对该 NAS 和 `sengokucola/maibot:v1.4.5` 的 opt-in 隔离 E2E 已重新运行：`1` 个测试通过，耗时约 `22.034s`；测试断言包含 Runner/Registry/HookDispatcher 注册、Hook 分发、隔离限制、清理和生产容器状态前后一致。运行后未残留 `mai-hook-e2e` 容器。
@@ -63,8 +63,8 @@ README 已记录同一套环境变量和安全边界；普通 unittest/CI 默认
 补充取得生产注册证据（2026-11-19，只读）：
 
 - 此前只检索 Docker 最近 stdout，遗漏实例历史 JSONL。使用实例日志目录 `/MaiMBot/bots/<bot_id>/logs/`，逐行解析 `event` 并精确匹配插件 ID 后，确认并非当前注册失败。
-- 当前容器启动于 `2026-11-17T05:58:06.17470796Z`。同批次 `[redacted]` 第 343、350、360、361 行分别记录加载成功、PluginContext 注入、注册完成和 `DeAI Filter 0.1.0 已加载（maisaka.reply.after_split）`，发生于 `05:58:31Z`。
-- Runner 日志 `[redacted]` 显示 import、create、config、bootstrap、register、on_load 阶段均 `outcome=completed`。第 156 行为注册完成，第 159 行为 Hook 加载提示。
+- 同一启动批次的脱敏日志记录加载成功、PluginContext注入、注册完成和 `DeAI Filter 0.1.0 已加载（maisaka.reply.after_split）`；具体时间戳、文件名、行号和日志路径属于私密现场资料。
+- Runner脱敏日志显示 import、create、config、bootstrap、register、on_load 阶段均 `outcome=completed`；具体文件名和行号属于私密现场资料。
 - 脱敏原始事件与文件行号保存在 [`P1-01_PRODUCTION_REGISTRATION_EVIDENCE.json`](P1-01_PRODUCTION_REGISTRATION_EVIDENCE.json)。日志中不带时区的 `11-17 13:58:31` 为原始时间显示，不与带 `Z` 的 UTC 时间混淆。
 - 更早的 13:51/13:52 启动曾因 manifest 缺少 `author.url` 和 `capabilities` 失败；13:53 起已加载成功，不能把早期失败当作当前故障。本轮没有修改生产文件。
 

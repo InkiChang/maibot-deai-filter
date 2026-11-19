@@ -4,16 +4,16 @@
 >
 > 交接日期：2026-11-19
 > 当前仓库：`InkiChang/maibot-deai-filter`
-> 本地项目目录：`[redacted]\managed-ga-state\artifacts\maibot-deai-plugin`
+> 代码来源：GitHub `main` 分支；新机器使用本机自行选择的克隆目录
 > 远端：`https://github.com/InkiChang/maibot-deai-filter.git`
 > 默认分支：`main`
 
 ## 1. 接手后的第一步
 
-在任何修改前执行：
+在任何修改前执行（把 `<repo>` 替换为新机器的实际克隆目录）：
 
 ```powershell
-cd [redacted]\managed-ga-state\artifacts\maibot-deai-plugin
+cd <repo>
 git status --short --branch
 git log -5 --oneline
 python -m unittest discover -s tests
@@ -32,18 +32,17 @@ python -m unittest discover -s tests
 
 ## 2. 当前Git与CI基线
 
-- 当前HEAD：`6ca940d79a5993935a083ebc5cb0b8c55c8df45c`
-- 提交标题：`Document sanitized WeChat event metadata verification`
-- 本地 `main` 与远端 `origin/main` 已一致。
-- 工作区已核实干净。
-- 对应 GitHub Actions：<https://github.com/InkiChang/maibot-deai-filter/actions/runs/[redacted]>
+- 当前基线：`334d8c324be16a02a15b900356044c93834c0621`
+- 提交标题：`Add cross-machine project handoff guide`
+- 该基线已推送到远端 `origin/main`，交接时以新机器实际 `git rev-parse HEAD` 为准。
+- 交接文档对应 GitHub Actions：<https://github.com/InkiChang/maibot-deai-filter/actions/runs/[redacted]>
 - Actions 结论：成功。
 - 最近提交链：
+  - `334d8c3`：跨机器交接指南
   - `6ca940d`：P1-03 脱敏微信事件字段证据
   - `bbcad57`：P1-02 隔离生命周期/异常恢复测试
   - `7871ded`：P1-01 生产插件注册证据
   - `617c5f7`：P1-01 宿主版本与加载验证
-  - `f25c16b`：P1-01 版本和宿主验证计划
 
 每次修改后至少执行：
 
@@ -100,12 +99,11 @@ P0-01 至 P0-11 已完成。关键事实：
 
 已核实：
 
-- NAS实时SSH ED25519指纹与系统 `known_hosts` 匹配：
-  `[redacted]`
-- 生产 `maibot-core`：`running/healthy`，重启次数为0。
+- 已授权的生产只读探测曾验证SSH主机指纹与 `known_hosts` 匹配；具体主机、端口、用户名和指纹不保存在公开仓库。
+- 生产 `maibot-core` 在当时探测中为 `running/healthy`，重启次数为0；具体容器标识和镜像摘要不公开。
 - 容器内实际 SDK：`2.23.0`。
 - 插件 manifest、TOML配置、Python语法均可解析。
-- 生产持久化JSONL证明插件导入、配置、PluginContext注入、注册和 `maisaka.reply.after_split` 加载成功。
+- 生产持久化日志证明插件导入、配置、PluginContext注入、注册和 `maisaka.reply.after_split` 加载成功；日志路径、文件名和行号属于私密现场资料。
 - 隔离Hook E2E通过，且生产容器前后状态不变。
 
 边界：生产启动注册成功不等于真实聊天Hook效果已验收；部署文件与仓库HEAD也不保证完全一致。详见 `docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md` 和 `docs/validation/P1-01_PRODUCTION_REGISTRATION_EVIDENCE.json`。
@@ -186,7 +184,7 @@ P0-01 至 P0-11 已完成。关键事实：
 
 ```text
 plugin.py                         插件入口/Hook注册
-_deai.py?                         实际文件为 deai.py，确定性过滤
+deai.py                           确定性过滤
 capture_message.py                私聊纯文本 fail-closed 提取
 memory_capture.py                 有界、易失候选捕获队列
 memory_store.py                   内存记忆/候选存储
