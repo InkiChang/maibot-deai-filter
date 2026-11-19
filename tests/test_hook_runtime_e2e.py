@@ -10,14 +10,11 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[1]
 FIXTURE = BASE / "tests" / "fixtures" / "hook_runtime_e2e.py"
+LIFECYCLE_FIXTURE = BASE / "tests" / "fixtures" / "lifecycle_runtime_e2e.py"
 
 
-@unittest.skipUnless(
-    os.environ.get("MAIBOT_RUN_HOOK_E2E") == "1",
-    "set MAIBOT_RUN_HOOK_E2E=1 to run isolated host E2E",
-)
 class HookRuntimeE2ETests(unittest.TestCase):
-    def test_runner_registers_and_dispatches_in_isolated_container(self):
+    def _run_isolated(self, fixture, marker):
         try:
             import paramiko
         except ImportError as exc:
@@ -68,7 +65,7 @@ class HookRuntimeE2ETests(unittest.TestCase):
             run("mkdir -m 755 " + q(remote))
             sftp = client.open_sftp()
             files = [p for p in BASE.glob("*.py") if not p.name.startswith("nas_")]
-            files.extend([BASE / "_manifest.json", BASE / "config.toml", FIXTURE])
+            files.extend([BASE / "_manifest.json", BASE / "config.toml", fixture])
             for path in files:
                 target = remote + "/" + path.name
                 sftp.put(str(path), target)
@@ -85,7 +82,7 @@ class HookRuntimeE2ETests(unittest.TestCase):
                 + " --env PYTHONPATH=/MaiMBot --env MAIBOT_INSTANCE_DIR=/sandbox/instance"
                 + " --mount type=bind,src=" + q(remote) + ",dst=/test,readonly"
                 + " --workdir /MaiMBot --entrypoint /MaiMBot/.venv/bin/python "
-                + q(image) + " /test/hook_runtime_e2e.py"
+                + q(image) + " /test/" + q(fixture.name)
             )
             _stdin, stdout, stderr = client.exec_command(command, timeout=180)
             evidence["stdout"] = stdout.read().decode("utf-8", "replace")
@@ -101,7 +98,7 @@ class HookRuntimeE2ETests(unittest.TestCase):
             self.assertTrue(mounts)
             self.assertTrue(all(m["Source"] == remote and m["Destination"] == "/test" and not m["RW"] for m in mounts))
             self.assertEqual(code, 0, evidence["stdout"] + "\n" + evidence["stderr"])
-            self.assertIn("E2E_PASS", evidence["stdout"])
+            self.assertIn(marker, evidence["stdout"])
         finally:
             try:
                 run("docker rm -f " + q(container) + " >/dev/null 2>&1 || true")
@@ -111,6 +108,18 @@ class HookRuntimeE2ETests(unittest.TestCase):
             finally:
                 client.close()
         self.assertTrue(evidence["production_unchanged"], evidence)
+        self.last_evidence = evidence
+        output = env.get("MAIBOT_E2E_EVIDENCE_FILE")
+        if output:
+            Path(output).write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    @unittest.skipUnless(os.environ.get("MAIBOT_RUN_HOOK_E2E") == "1", "Hook E2E opt-in required")
+    def test_runner_registers_and_dispatches_in_isolated_container(self):
+        self._run_isolated(FIXTURE, "E2E_PASS")
+
+    @unittest.skipUnless(os.environ.get("MAIBOT_RUN_LIFECYCLE_E2E") == "1", "Lifecycle E2E opt-in required")
+    def test_lifecycle_in_isolated_container(self):
+        self._run_isolated(LIFECYCLE_FIXTURE, "LIFECYCLE_PASS")
 
 
 if __name__ == "__main__":
