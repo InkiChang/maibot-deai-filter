@@ -1,0 +1,88 @@
+{
+  "collected_at_utc": "2026-11-19T07:59:55.004850+00:00",
+  "method": "read-only SQLite aggregate over persisted inbound metadata; production source inspection",
+  "platform": "weixin_clawbot",
+  "raw_hook_event_captured": false,
+  "privacy": {
+    "remote_redaction": true,
+    "queried_content_columns": false,
+    "exported_identifier_values": false,
+    "exported_nicknames": false,
+    "read_account_json": false
+  },
+  "databases": [
+    {
+      "source": "/MaiMBot/bots/<bot_id>/data/MaiBot.db",
+      "all_platform_rows": 111,
+      "inbound_rows_with_received_at": 39,
+      "field_shapes": {
+        "message_id": [
+          {
+            "sqlite_type": "text",
+            "rows": 39,
+            "nonempty_rows": 39
+          }
+        ],
+        "platform": [
+          {
+            "sqlite_type": "text",
+            "rows": 39,
+            "nonempty_rows": 39
+          }
+        ],
+        "account_id": [
+          {
+            "sqlite_type": "text",
+            "rows": 39,
+            "nonempty_rows": 39
+          }
+        ],
+        "scope": [
+          {
+            "sqlite_type": "null",
+            "rows": 39,
+            "nonempty_rows": 0
+          }
+        ],
+        "user_id": [
+          {
+            "sqlite_type": "text",
+            "rows": 39,
+            "nonempty_rows": 39
+          }
+        ],
+        "group_id": [
+          {
+            "sqlite_type": "null",
+            "rows": 39,
+            "nonempty_rows": 0
+          }
+        ],
+        "session_id": [
+          {
+            "sqlite_type": "text",
+            "rows": 39,
+            "nonempty_rows": 39
+          }
+        ]
+      },
+      "all_platform_group_id_present_rows": 0,
+      "session_join": {
+        "inbound_rows": 39,
+        "matched_session_rows": 39,
+        "platform_equal_rows": 39,
+        "account_id_equal_rows": 39,
+        "scope_nullsafe_equal_rows": 39,
+        "user_id_equal_rows": 39
+      }
+    }
+  ],
+  "source_sha256": {
+    "/MaiMBot/src/plugins/built_in/weixin_clawbot_adapter/codec.py": "7b90cd9182bc78c94bf80872ee1118fac3da00e1e538f5621e4bfe11c4ff58b0",
+    "/MaiMBot/src/plugins/built_in/weixin_clawbot_adapter/connection.py": "6529bb26cce406f51f39559b7d5430a8e88e959a131503fed2b31b098e6895cd",
+    "/MaiMBot/src/plugin_runtime/hook_payloads.py": "c29fbb1ea72cb4f0542913e9a15dcf3b0454802da9170fea71fb9241553cfd81",
+    "/MaiMBot/src/plugin_runtime/host/message_utils.py": "753a357d0a0d412a0a0b55098e882a00d8d8c1cea2a980ca3f782ac61b1bde7e",
+    "/MaiMBot/src/chat/message_receive/bot.py": "4ccd1271fe242e37cc16a4b2c50fdf3ac97ec4506bcf69d1b3f684fe270b6a33",
+    "/MaiMBot/src/common/utils/utils_session.py": "18e98eac9ca53c2d89eecb47af8c95ae3bb3b2c32e5c072aa970b7266cfa27bf"
+  }
+}
