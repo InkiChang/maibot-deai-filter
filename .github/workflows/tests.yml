@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run offline SDK-stub tests
+        run: python tests/test_plugin.py
+      - name: Run SubQ config unit tests
+        run: python -m unittest discover -s tests -p test_subq_config.py -v
+      - name: Run SubQ client core tests
+        run: python -m unittest discover -s tests -p test_subq_client.py -v
+      - name: Run SubQ decision schema tests
+        run: python -m unittest discover -s tests -p test_subq_schema.py -v
+      - name: Run deterministic state engine tests
+        run: python -m unittest discover -s tests -p test_state_engine.py -v
+      - name: Run deterministic candidate scoring tests
+        run: python -m unittest discover -s tests -p test_candidate_scoring.py -v
+      - name: Run scoped memory store tests
+        run: python -m unittest discover -s tests -p test_memory_store.py -v
+      - name: Run all offline and Linux Unix socket integration tests
+        run: python -m unittest discover -s tests -v

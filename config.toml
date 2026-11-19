@@ -1,0 +1,77 @@
+[plugin]
+enabled = true
+config_version = "1.0.0"
+
+[deai]
+# 总开关：关掉则插件完全不动任何回复
+enabled = true
+
+# 去掉 markdown 壳（标题、加粗、列表符号、表格、行内代码），链接保留
+strip_markdown = true
+
+# 删掉括号 / 星号里的动作神态描写（"（揉了揉眼睛）"），"（笑）（小声）"这类短括号不动
+strip_actions = true
+
+# 删掉 AI 自称、客套收尾、总结腔、说明书腔、客服腔、起手铺垫
+strip_ai_phrases = true
+
+# 删掉漏进正文的模型模板标签（think / tool_response / <|im_end|> 等）
+strip_model_tags = true
+
+# 删掉每行开头的自称名字（"程安之：…"）
+strip_self_name = true
+
+# 一条里出现两个以上"——"时换成逗号
+dash_to_comma = true
+
+# "首先，…其次，…最后，…"这种机械枚举，出现两处以上才去掉枚举词
+strip_ordinals = true
+
+# 去掉句尾单独的一个"。"（"。。。"、"…"、问号感叹号都保留）
+drop_trailing_period = true
+
+# 同一条回复里，几乎重复的段只留第一份
+dedupe_segments = true
+dedupe_threshold = 0.75
+dedupe_min_len = 12
+
+# bot 自己的名字：用于删掉"名字："开头。留空则不做这一步
+bot_names = []
+
+# 额外想删的说法：一行一条，/…/ 当正则写，其余按字面
+extra_phrases = []
+
+[memory_capture]
+# 后台候选抽取默认关闭；启用前需显式填写 MaiBot 真实 session_id 白名单
+# 仅平台消息中 group_info 为 null、文本类型私聊、完全匹配白名单才会入队
+# 候选只存插件进程内存且为待审；不写盘，不接 A-Memorix
+enabled = false
+model_task_name = ""
+allowed_targets = []
+max_queue = 32
+
+[memory_viewer]
+# 只读候选查看器默认关闭；启用前必须同时启用后台抽取并填写白名单
+# socket_path 必须是容器内专用、已挂载的Unix socket目录
+# allowed_uids / allowed_gids 至少填写一项，禁止留空
+enabled = false
+socket_path = "/run/maibot-admin/candidates.sock"
+allowed_uids = []
+allowed_gids = []
+socket_gid = 0
+
+[subq]
+# SubQ 决策模块尚未接入宿主流程，默认关闭；配置项仅供独立解析器使用
+# 任何服务商兼容性均未实测，不要在此写入密钥明文
+enabled = false
+protocol = "openai_chat_completions"
+provider = ""
+base_url = ""
+model = ""
+credential_ref = ""
+timeout_seconds = 20.0
+# 最多额外重试 1 次（总请求最多 2 次）；429 只在有效 Retry-After 且落入总时限时重试
+max_retries = 1
+daily_request_budget = 0
+daily_token_budget = 0
+daily_cost_budget = 0.0

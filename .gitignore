@@ -1,0 +1,30 @@
+# Python bytecode / environments
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Test / tooling output
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local secrets and private deployment material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.*
+private-notes/
+*_PRIVATE.md
+
+# Local editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

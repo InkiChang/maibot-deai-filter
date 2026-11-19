@@ -1,0 +1,40 @@
+{
+  "manifest_version": 2,
+  "id": "inkichang.deai-filter",
+  "version": "0.1.0",
+  "name": "去 AI 味过滤器（De-AI Filter）",
+  "description": "回复发出前做文本卫生：删 AI 自称 / 客服腔 / 总结腔 / markdown 壳 / 括号动作描写 / 模板标签，去句尾句号与同轮复读。只删改、不生成、不截断长度。规则思路移植自 dsh-fish-soul 的 behavior.js。",
+  "author": {
+    "name": "InkiChang",
+    "url": "https://github.com/InkiChang"
+  },
+  "capabilities": [
+    "config.get"
+  ],
+  "license": "MIT",
+  "urls": {
+    "repository": "https://github.com/InkiChang"
+  },
+  "host_application": {
+    "min_version": "1.4.0",
+    "max_version": "999.999.999"
+  },
+  "sdk": {
+    "min_version": "2.20.0",
+    "max_version": "999.999.999"
+  },
+  "plugin_type": "extension",
+  "display": {
+    "icon": {
+      "type": "lucide",
+      "value": "sparkles",
+      "fallback": "wand"
+    }
+  },
+  "i18n": {
+    "default_locale": "zh-CN",
+    "supported_locales": [
+      "zh-CN"
+    ]
+  }
+}
