@@ -24,7 +24,7 @@
 - [x] **P0-11** GitHub Actions `Tests #3` 已于 2026-11-19 在公开仓库对提交 `80ba98f` 成功完成（`offline-tests` job）；覆盖发行构建、包结构检查与离线测试套件。
 
 ## P1 — MaiBot 1.4.5 接入验证与安全边界
-- [ ] **P1-01** 锁定目标 MaiBot 与 SDK 版本，记录安装、配置解析、插件加载的验证步骤。
+- [ ] **P1-01** **部分完成（2026-11-19）**：已锁定验证目标 MaiBot `1.4.5` + `maibot-plugin-sdk==2.23.0`，并记录安装、配置解析、插件加载及隔离 E2E 步骤，见 [`docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md`](docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md)。当前生产宿主实际版本、配置解析和插件加载仍未取得可复核输出；SSH 主机指纹/KEX 阻塞，故保持未勾选。
 - [ ] **P1-02** 验证生命周期、`create_plugin()`、插件启停及异常恢复行为。
 - [ ] **P1-03** 从真实事件样本确认微信私聊/群聊、用户 ID、会话 ID、平台字段。
 - [ ] **P1-04** 验证回复 Hook 的执行顺序、参数结构、允许修改字段和错误策略。
