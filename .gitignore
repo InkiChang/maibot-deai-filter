@@ -28,3 +28,14 @@ private-notes/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local deployment acceptance evidence and host-only helpers (never publish)
+/IMPLEMENTATION_STATUS.md
+/linux-viewer-test.log
+/nas-acceptance-baseline.txt
+/nas-*.json
+/nas-*.log
+/nas-runtime-source/
+/nas_*.py
+/docs/nas_viewer_acceptance.md
+/docs/wechat_private_capture_acceptance.md
