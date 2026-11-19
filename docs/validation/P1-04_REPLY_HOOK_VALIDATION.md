@@ -19,7 +19,8 @@
 - SDK `v2.23.0` 的 `ReplyAfterSplitPayload` 将 Hook 参数定义为 `segments`、`session_id`、`enable_chinese_typo`；`ReplyPostProcessSegment` 的段字段为 `text`、`separator`、`quote_previous`、`is_correction`。参见 [SDK types.py](https://github.com/Mai-with-u/maibot-plugin-sdk/blob/v2.23.0/maibot_sdk/types.py)。
 - MaiBot `v1.4.5` `HookDispatcher.invoke_hook()` 对处理器按 `blocking` 在 `observe` 前、再按 `early` → `normal` → `late` 排序；blocking 处理器串行执行，返回 `modified_kwargs` 时在 HookSpec 允许 `allow_kwargs_mutation` 的条件下替换当前 kwargs，`action=abort` 只有在 `allow_abort` 时才中止。参见 [hook_dispatcher.py](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/plugin_runtime/host/hook_dispatcher.py)。
 - Dispatcher 对处理器失败按该处理器的 `error_policy` 处理；`skip`/`log` 不设置中止，错误进入聚合结果，继续主链。超时、RPC/处理异常不会凭空产生修改后的 kwargs。Hook 规格字段和变更/中止能力见 [hook_spec_registry.py](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/plugin_runtime/host/hook_spec_registry.py)。
-- MaiBot 入站 Hook 的消息对象会经序列化；但本项回复 Hook 的最终业务调用仍以 `HookSpec` 与调用方实际注册为准，不能仅由 SDK 类型声明推断每个部署的运行时字段白名单。参见 [message_utils.py](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/plugin_runtime/host/message_utils.py)。
+- `MaisakaChatLoopService` 为 `maisaka.reply.after_split` 注册的真实 `HookSpec` 明确要求 `segments`、`session_id`、`enable_chinese_typo`，每段四个字段且 `text` 至少一个字符；同时设 `allow_abort=False`、`allow_kwargs_mutation=True`、超时 3000ms。源码说明该 Hook 在最终回复断句后、限制段数与合并前触发。参见 [chat_loop_service.py](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/maisaka/chat_loop_service.py#L618-L644)。
+- Dispatcher 的 `_merge_blocking_result()` 会以 `dict(modified_kwargs)` 完整替换 dispatch kwargs，而不是增量合并；插件返回 `{**kwargs, "segments": kept}` 因而会保留所有输入顶层参数。对失败结果会记录 error 并执行 error policy；只有 `error_policy="abort"` 且 HookSpec 允许 abort 才中止。参见同一固定提交的 [hook_dispatcher.py](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/plugin_runtime/host/hook_dispatcher.py#L284-L301) 与 [合并/错误策略实现](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/plugin_runtime/host/hook_dispatcher.py#L594-L683)。
 
 ## 3. 插件实现证据
 
@@ -63,7 +64,7 @@ python -m unittest discover -s tests -p 'test_p1_04_reply_hook.py' -v
 
 仍未确认：
 
-- 当前生产部署的 HookSpec 是否与公开 `v1.4.5` 完全一致；
+- 当前生产部署的 HookSpec 与公开 MaiBot `v1.4.5` 源码是否完全一致；
 - 生产部署插件源码与仓库 HEAD 是否一致（P1-01 已明确哈希不同）；
 - 真实微信回复在生产调用链中的最终采纳效果、延迟、多个生产插件之间的排序竞争；
 - 真实生产 Hook 异常/超时和真实消息字段样本。

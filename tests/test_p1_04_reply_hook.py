@@ -5,7 +5,8 @@ stub and a synthetic dispatcher, then load ``plugin.py``.  No MaiBot process,
 network, model, account, or real message is touched.  The dispatcher models the
 contract already exercised by the checked-in isolated fixture: a blocking Hook
 may return ``modified_kwargs`` and ``action=continue``; on fail-open/skip the
-original kwargs remain unchanged.
+original kwargs remain unchanged. These assertions cover the plugin boundary only;
+the pinned host contract is documented separately.
 """
 from __future__ import annotations
 
