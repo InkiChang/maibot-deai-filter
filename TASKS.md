@@ -24,7 +24,7 @@
 - [x] **P0-11** GitHub Actions `Tests #3` 已于 2026-11-19 在公开仓库对提交 `80ba98f` 成功完成（`offline-tests` job）；覆盖发行构建、包结构检查与离线测试套件。
 
 ## P1 — MaiBot 1.4.5 接入验证与安全边界
-- [ ] **P1-01** **部分完成（2026-11-19）**：已确认NAS SSH ED25519指纹与 `known_hosts` 匹配；生产 `maibot-core` 为 MaiBot `1.4.5`，实际 SDK 为 `2.23.0`，插件 manifest/config 解析与隔离 Hook E2E 均通过，详见 [`docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md`](docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md)。当前唯一残差是生产日志未取得 `inkichang.deai-filter` 的发现/注册及真实 Hook 加载证据，故保持未勾选。
+- [x] **P1-01** **完成（2026-11-19）**：已确认 NAS SSH 指纹、MaiBot `1.4.5`、SDK `2.23.0`、manifest/config 解析与隔离 Hook E2E；实例持久化 JSONL 证明当前容器启动批次已完成 `inkichang.deai-filter` 的导入、配置、注册及 `maisaka.reply.after_split` 加载，详见 [`docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md`](docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md)。不包含真实聊天 Hook 效果验证，亦不证明部署源码与仓库 HEAD 一致；本轮未重启或修改生产。
 - [ ] **P1-02** 验证生命周期、`create_plugin()`、插件启停及异常恢复行为。
 - [ ] **P1-03** 从真实事件样本确认微信私聊/群聊、用户 ID、会话 ID、平台字段。
 - [ ] **P1-04** 验证回复 Hook 的执行顺序、参数结构、允许修改字段和错误策略。
