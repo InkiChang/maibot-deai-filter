@@ -18,6 +18,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Build source and wheel distributions
+        run: |
+          python -m pip install build
+          python -m build --outdir dist
       - name: Run offline SDK-stub tests
         run: python tests/test_plugin.py
       - name: Run SubQ config unit tests

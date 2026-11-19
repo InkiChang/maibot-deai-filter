@@ -1,12 +1,38 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "maibot-deai-filter"
 version = "0.1.0"
 description = "MaiBot pre-reply deterministic text cleanup extension"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.optional-dependencies]
 integration = ["paramiko>=3.4,<5"]
+
+[tool.setuptools]
+py-modules = [
+  "candidate_intake",
+  "candidate_scoring",
+  "candidate_viewer",
+  "candidate_viewer_cli",
+  "capture_message",
+  "deai",
+  "memory_capture",
+  "memory_store",
+  "plugin",
+  "state_engine",
+  "subq_client",
+  "subq_config",
+  "subq_schema",
+]
+include-package-data = true
+
+[tool.setuptools.data-files]
+"." = ["_manifest.json", "config.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
