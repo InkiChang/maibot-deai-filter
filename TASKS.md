@@ -27,7 +27,7 @@
 - [x] **P1-01** **完成（2026-11-19）**：已确认 NAS SSH 指纹、MaiBot `1.4.5`、SDK `2.23.0`、manifest/config 解析与隔离 Hook E2E；实例持久化 JSONL 证明当前容器启动批次已完成 `inkichang.deai-filter` 的导入、配置、注册及 `maisaka.reply.after_split` 加载，详见 [`docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md`](docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md)。不包含真实聊天 Hook 效果验证，亦不证明部署源码与仓库 HEAD 一致；本轮未重启或修改生产。
 - [x] **P1-02** **完成（2026-11-19，隔离真实Runner）**：基于MaiBot `1.4.5`真实 `PluginRunner`/`PluginLoader`验证`create_plugin`、on_load/config更新、禁用/启用、卸载/recover幂等、on_load异常清理与旧实例回滚、修复后reload及shutdown任务清理；生命周期与Hook隔离E2E、完整138项离线测试通过。测试用RPC Stub，不覆盖生产IPC断连或真实微信事件竞争；生产容器状态前后不变。详见 [`docs/validation/P1-02_LIFECYCLE_VALIDATION.md`](docs/validation/P1-02_LIFECYCLE_VALIDATION.md)。
 - [ ] **P1-03** **部分完成（2026-11-19）**：生产微信私聊入站元数据聚合确认39条均有非空 `platform`、`account_id`、`message_id`、`user_id`、`session_id`，并与会话表关联；未读取正文或导出标识值。当前微信适配器只支持私聊，不能据此确认真实群聊事件；也尚无脱敏的完整Hook运行时事件快照，故保持未勾选。字段来源、统计与边界见 [`docs/validation/P1-03_WECHAT_EVENT_SCHEMA.md`](docs/validation/P1-03_WECHAT_EVENT_SCHEMA.md) 和 [`docs/validation/P1-03_WECHAT_METADATA_EVIDENCE.json`](docs/validation/P1-03_WECHAT_METADATA_EVIDENCE.json)。
-- [ ] **P1-04** **部分完成（2026-11-20 审核纠正）**：公开源码契约与插件 Stub 回归已有证据，但合成 Dispatcher 不能证明真实宿主排序、错误策略和回复调用方最终字段采纳；此前完成声明过早，恢复未勾选。待固定版本真实宿主隔离测试补齐，不要求发送真实微信消息。详见 [`回复 Hook 验证记录`](docs/validation/P1-04_REPLY_HOOK_VALIDATION.md)。
+- [x] **P1-04** **完成（2026-11-20，真实宿主隔离验证）**：MaiBot v1.4.5 固定源码、SDK 2.23.0 的 11 组检查通过，覆盖真实断句→插件过滤→合并、处理器排序、参数替换、四字段采纳和错误分层。处理器 SKIP 不等于非法段能回退。使用合成 Supervisor，不测生产 IPC、微信输出或延迟；临时资源已清理，生产状态前后一致。见[夹具及验证记录](docs/validation/P1-04_REPLY_HOOK_VALIDATION.md)。
 - [ ] **P1-05** 核实 Replyer 前置 Hook 是否能安全中止/延迟；不支持则禁止静默拦截设计。
 - [ ] **P1-06** 实现本人私聊身份硬校验；群聊、非本人、未知事件在最前入口拒绝。
 - [ ] **P1-07** 自动测试拒绝事件零状态读取、零上下文注入、零模型调用。

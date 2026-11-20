@@ -1,72 +1,36 @@
-# P1-04 回复 Hook 验证记录
+# P1-04：回复 Hook 的执行与字段采纳
 
-> 状态：**部分完成（2026-11-20 审核纠正）**。已完成公开源码核对和插件 Stub 回归；尚缺真实宿主调度顺序、错误策略及回复调用方最终字段采纳的隔离验证。此前“完成”结论过早，任务恢复未勾选。
->
-> 记录日期：2026-11-19
+**2026-11-20：按固定版本宿主隔离语义完成，不是生产微信验收。** 此前只有静态源码、插件 Stub 和单处理器分发记录，任务曾恢复未勾选。本次在获准创建的临时禁网容器中执行了真实分发器和回复调用方。生产插件未部署或改动，没有发消息。
 
-## 1. 验证范围与安全边界
+## 版本与方法
 
-本项验证目标是 `maisaka.reply.after_split` 的执行顺序、参数/返回结构、可修改字段和错误策略。验证仅使用：
+目标是 MaiBot `v1.4.5`（公开提交 `478f671e64467121fd3e39205c8d3507b5ce0bd6`）与 `maibot-plugin-sdk==2.23.0`。[夹具](../../tests/fixtures/reply_contract_runtime.py) 在运行时校验 SDK 版本和六个相关宿主源码文件的 SHA-256；不是靠镜像标签判断版本，也不宣称整个镜像与上游字节相同。
 
-- 仓库当前插件源码；
-- MaiBot `v1.4.5` 公开源码（固定 tag，对应提交 `478f671e64467121fd3e39205c8d3507b5ce0bd6`）与 SDK `v2.23.0` 公开类型定义；
-- 进程内 SDK Stub、合成 Dispatcher 和仓库既有隔离 fixture 的离线测试。
+实际调用宿主 HookSpec 注册函数、ComponentRegistry、HookDispatcher、`BuiltinToolRuntimeContext._transform_reply_segments`、规则断句和段合并。处理器注册元数据与 Supervisor 由夹具提供，跳过真实 Runner IPC；插件使用仓库源码、真实 SDK、无发送能力的合成上下文和测试配置。全部输入为合成数据，不启动适配器或调用模型。
 
-未连接生产主机，未读取部署资料、凭据、账号文件、聊天正文、昵称或真实身份值；未重启、热加载、覆盖生产插件，未发送真实微信消息。
+## 实测结果
 
-## 2. 公开宿主源码依据
+| 问题 | 观察到的结果 |
+| --- | --- |
+| 执行顺序 | 将处理器逆序交给分发器，blocking 仍按 early、normal、late 执行；同槽内置先于外部，同来源按插件 ID 排序。observe 随后异步执行；它返回的 abort 和空段不改变主结果。未单测同一插件内按处理器名称打破平局。 |
+| 相对断句和合并的位置 | 在规则断句模式下，两行合成文本先形成两段。Hook 实际收到这两段带格式标记的文本，真实插件完成过滤，宿主按最终段数上限合并为一段。此测试未替换断句或合并函数。 |
+| 进入和返回的参数 | 回复调用方实际传 `segments`、`session_id`、`enable_chinese_typo`。分发器收到 `modified_kwargs` 时**整字典替换**，不是增量合并。调用方只反序列化 `segments`；测试中修改返回的 `session_id` 没有改变会话，附加的顶层字段也未被作为段消费。 |
+| 允许的段字段 | 必须返回非空列表。每段恰有 `text`、`separator`、`quote_previous`、`is_correction`；前两者是字符串，`text.strip()` 非空，后两者必须为布尔值。四个合法值均能进入宿主分段对象。 |
+| 错误分层 | 插件过滤函数抛异常时，插件返回 continue，原段保留。blocking 处理器抛错或超时且策略为 SKIP 时，分发器记录错误、保留当前参数、执行后续处理器。该 HookSpec 禁止 abort：显式 abort 请求被忽略并记错。 |
+| 非法返回不是 SKIP | 成功返回的空列表、非列表、额外段字段或字段类型不对，由**业务调用方**抛 `ValueError`；缺少 `segments` 抛 `KeyError`。夹具实测到调用方抛错为止。上层回复工具捕获后返回失败，是[源码依据](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/maisaka/builtin_tool/reply.py#L746-L763)，不是本次完整工具或发送链路实测。 |
 
-- SDK `v2.23.0` 的 `ReplyAfterSplitPayload` 将 Hook 参数定义为 `segments`、`session_id`、`enable_chinese_typo`；`ReplyPostProcessSegment` 的段字段为 `text`、`separator`、`quote_previous`、`is_correction`。参见 [SDK types.py](https://github.com/Mai-with-u/maibot-plugin-sdk/blob/v2.23.0/maibot_sdk/types.py)。
-- MaiBot `v1.4.5` `HookDispatcher.invoke_hook()` 对处理器按 `blocking` 在 `observe` 前、再按 `early` → `normal` → `late` 排序；blocking 处理器串行执行，返回 `modified_kwargs` 时在 HookSpec 允许 `allow_kwargs_mutation` 的条件下替换当前 kwargs，`action=abort` 只有在 `allow_abort` 时才中止。参见 [hook_dispatcher.py](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/plugin_runtime/host/hook_dispatcher.py)。
-- Dispatcher 对处理器失败按该处理器的 `error_policy` 处理；`skip`/`log` 不设置中止，错误进入聚合结果，继续主链。超时、RPC/处理异常不会凭空产生修改后的 kwargs。Hook 规格字段和变更/中止能力见 [hook_spec_registry.py](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/plugin_runtime/host/hook_spec_registry.py)。
-- `MaisakaChatLoopService` 为 `maisaka.reply.after_split` 注册的真实 `HookSpec` 明确要求 `segments`、`session_id`、`enable_chinese_typo`，每段四个字段且 `text` 至少一个字符；同时设 `allow_abort=False`、`allow_kwargs_mutation=True`、超时 3000ms。源码说明该 Hook 在最终回复断句后、限制段数与合并前触发。参见 [chat_loop_service.py](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/maisaka/chat_loop_service.py#L618-L644)。
-- Dispatcher 的 `_merge_blocking_result()` 会以 `dict(modified_kwargs)` 完整替换 dispatch kwargs，而不是增量合并；插件返回 `{**kwargs, "segments": kept}` 因而会保留所有输入顶层参数。对失败结果会记录 error 并执行 error policy；只有 `error_policy="abort"` 且 HookSpec 允许 abort 才中止。参见同一固定提交的 [hook_dispatcher.py](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/plugin_runtime/host/hook_dispatcher.py#L284-L301) 与 [合并/错误策略实现](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/plugin_runtime/host/hook_dispatcher.py#L594-L683)。
+宿主依据：[HookSpec](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/maisaka/chat_loop_service.py#L618-L644)、[分发结果合并与错误策略](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/plugin_runtime/host/hook_dispatcher.py#L594-L683)、[最终段校验](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/maisaka/builtin_tool/context.py#L403-L428)、[断句与合并之间的 Hook](https://github.com/Mai-with-u/MaiBot/blob/478f671e64467121fd3e39205c8d3507b5ce0bd6/src/chat/utils/utils.py#L518-L549)。
 
-## 3. 插件实现证据
+## 证据与复跑
 
-当前插件在 [`plugin.py`](../../plugin.py)：
+实际成功夹具 SHA-256：`12f9dac548e5b68886445e70b9d29ad0298e70f6c1b8bc6e45307ea7c6012746`。最终运行输出 `REPLY_CONTRACT_PASS`，11 组检查通过。用后检查确认临时资源已删除，生产容器前后状态快照一致。仅公开结果，不公开 SSH 资料、镜像或容器标识、现场路径及原始日志。调试时先后修正了临时输入的读权限和测试插件缺少 SDK 上下文的问题；失败尝试不计入通过记录。
 
-1. 注册 `maisaka.reply.after_split` 为 `BLOCKING`、`EARLY`、`SKIP`（第 245–252 行）。
-2. 进入 handler 后依次检查配置和 `segments` 类型；按输入顺序逐段校验并调用过滤器；丢弃被清空的段；然后按配置去重（第 253–288 行）。
-3. 全部段被清空、无变化或出现坏输入时返回 `{"action": "continue"}`，不提交空列表或部分不可信结果（第 256–291 行）。外层异常也返回 `continue`（第 302–303 行），因此插件自身是 fail-open。
-4. 有变化时返回 `{"action": "continue", "modified_kwargs": {**kwargs, "segments": kept}}`（第 301 行）：顶层传入 kwargs 保留，仅替换 `segments`。
-5. 每个输出段由 `_normalize_segment()` 限定为四个宿主字段 `text`、`separator`、`quote_previous`、`is_correction`（第 50–57 行）；任意额外段字段不会透传，原输入段顺序保留。
+隔离限制：无网络、只读根文件系统、丢弃全部 capabilities、no-new-privileges、单一只读测试输入挂载和临时可写文件系统；不挂载生产数据。生产只做容器元数据前后比较。没有读取账号文件或消息记录。
 
-## 4. 隔离测试证据
-
-新增 [`tests/test_p1_04_reply_hook.py`](../../tests/test_p1_04_reply_hook.py)，共 5 项：
-
-- 注册元数据：`BLOCKING` / `EARLY` / `SKIP`；
-- 合成 Dispatcher 的进入 → handler → 返回 → 采纳顺序；
-- 顶层 `session_id`/额外参数保留，段元数据和顺序保留，额外段字段丢弃；
-- 坏输入、全段清空时保留原 kwargs（fail-open）；
-- 注入过滤器异常时保留原 kwargs，不阻断回复。
-
-命令：
+同一夹具也可通过[本机 Docker 入口](../../tests/test_reply_contract_local.py)复跑（显式启用，镜像须已在本地）：
 
 ```bash
-python -m unittest discover -s tests -p 'test_p1_04_reply_hook.py' -v
+MAIBOT_RUN_LOCAL_REPLY_CONTRACT=1 python -m unittest discover -s tests -p test_reply_contract_local.py -v
 ```
 
-结果：**5 项通过**。该测试使用进程内 Stub 与合成边界，不连接 MaiBot/网络/模型，不发送消息；它证明插件契约和隔离语义，不证明生产微信端到端效果。
-
-仓库既有 [`tests/fixtures/hook_runtime_e2e.py`](../../tests/fixtures/hook_runtime_e2e.py) 还提供 opt-in 的真实 MaiBot Runner/Registry/Dispatcher 隔离入口；默认未启用，避免在没有用户明确授权、主机指纹和匹配镜像时连接任何环境。该 fixture 自行注册 HookSpec，不能替代生产 HookSpec 或真实消息验收。
-
-## 5. 结论与未覆盖边界
-
-已确认：
-
-- 宿主公开 Dispatcher 的 blocking/observe 与 early/normal/late 排序规则；
-- 插件声明和内部处理顺序；
-- SDK 公开段结构；
-- 插件允许返回的修改形态、保留字段、坏输入/异常 fail-open 策略；
-- `SKIP` 的插件声明与宿主公开错误处理方向（不主动 abort）。
-
-仍未确认：
-
-- 当前生产部署的 HookSpec 与公开 MaiBot `v1.4.5` 源码是否完全一致；
-- 生产部署插件源码与仓库 HEAD 是否一致（P1-01 已明确哈希不同）；
-- 真实微信回复在生产调用链中的最终采纳效果、延迟、多个生产插件之间的排序竞争；
-- 真实生产 Hook 异常/超时和真实消息字段样本。
-
-现有合成 Dispatcher 的顺序由测试自身写定，不能作为真实宿主排序的等价验证；HookSpec 的源码描述也不能替代回复调用方的运行验证。关闭本项前，应在固定版本隔离环境执行真实 Dispatcher 和回复字段校验，覆盖多个处理器排序、完整 kwargs 替换、非法段回退以及异常/超时继续策略。该验证不要求发送真实微信消息。任何远端隔离执行仍需明确授权；生产聊天效果留给 P2-05/P8 验收。
+本机镜像拉取超时，故本次通过记录来自获授权的远端临时容器，不是本机 Docker 包装器成功记录。普通 CI/离线套件默认跳过此测试。[SDK Stub 回归](../../tests/test_p1_04_reply_hook.py)仍用于快速检测插件行为，不替代上述验证。真实生产配置、多插件组合、微信实际输出与延迟仍属 P2-05/P8；此结论也不适用于 P1-05 的 Replyer 前置 Hook。
