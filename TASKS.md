@@ -27,7 +27,7 @@
 - [x] **P1-01** **完成（2026-11-19）**：已确认 NAS SSH 指纹、MaiBot `1.4.5`、SDK `2.23.0`、manifest/config 解析与隔离 Hook E2E；实例持久化 JSONL 证明当前容器启动批次已完成 `inkichang.deai-filter` 的导入、配置、注册及 `maisaka.reply.after_split` 加载，详见 [`docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md`](docs/validation/P1-01_VERSION_AND_HOST_VALIDATION.md)。不包含真实聊天 Hook 效果验证，亦不证明部署源码与仓库 HEAD 一致；本轮未重启或修改生产。
 - [x] **P1-02** **完成（2026-11-19，隔离真实Runner）**：基于MaiBot `1.4.5`真实 `PluginRunner`/`PluginLoader`验证`create_plugin`、on_load/config更新、禁用/启用、卸载/recover幂等、on_load异常清理与旧实例回滚、修复后reload及shutdown任务清理；生命周期与Hook隔离E2E、完整138项离线测试通过。测试用RPC Stub，不覆盖生产IPC断连或真实微信事件竞争；生产容器状态前后不变。详见 [`docs/validation/P1-02_LIFECYCLE_VALIDATION.md`](docs/validation/P1-02_LIFECYCLE_VALIDATION.md)。
 - [ ] **P1-03** **部分完成（2026-11-19）**：生产微信私聊入站元数据聚合确认39条均有非空 `platform`、`account_id`、`message_id`、`user_id`、`session_id`，并与会话表关联；未读取正文或导出标识值。当前微信适配器只支持私聊，不能据此确认真实群聊事件；也尚无脱敏的完整Hook运行时事件快照，故保持未勾选。字段来源、统计与边界见 [`docs/validation/P1-03_WECHAT_EVENT_SCHEMA.md`](docs/validation/P1-03_WECHAT_EVENT_SCHEMA.md) 和 [`docs/validation/P1-03_WECHAT_METADATA_EVIDENCE.json`](docs/validation/P1-03_WECHAT_METADATA_EVIDENCE.json)。
-- [x] **P1-04** **完成（2026-11-19，公开宿主源码 + 隔离验证）**：固定 MaiBot `v1.4.5` 源码确认 Dispatcher 的阻塞/观察顺序、串行调用及 kwargs 替换；真实 HookSpec 位于断句后、段数限制/合并前，要求 `segments/session_id/enable_chinese_typo` 和四个段字段，并禁止 abort、允许 kwargs 修改。插件注册 `BLOCKING/EARLY/SKIP`，只替换 `segments`、保留顶层 kwargs，坏输入/异常/全删空 fail-open。新增 `tests/test_p1_04_reply_hook.py` 5项通过；详见 [`docs/validation/P1-04_REPLY_HOOK_VALIDATION.md`](docs/validation/P1-04_REPLY_HOOK_VALIDATION.md)。未声称生产微信端到端；生产部署哈希与仓库HEAD不一致。
+- [ ] **P1-04** **部分完成（2026-11-20 审核纠正）**：公开源码契约与插件 Stub 回归已有证据，但合成 Dispatcher 不能证明真实宿主排序、错误策略和回复调用方最终字段采纳；此前完成声明过早，恢复未勾选。待固定版本真实宿主隔离测试补齐，不要求发送真实微信消息。详见 [`回复 Hook 验证记录`](docs/validation/P1-04_REPLY_HOOK_VALIDATION.md)。
 - [ ] **P1-05** 核实 Replyer 前置 Hook 是否能安全中止/延迟；不支持则禁止静默拦截设计。
 - [ ] **P1-06** 实现本人私聊身份硬校验；群聊、非本人、未知事件在最前入口拒绝。
 - [ ] **P1-07** 自动测试拒绝事件零状态读取、零上下文注入、零模型调用。
@@ -86,7 +86,7 @@
 - [ ] **P5-02b** 持久化近期主题、摘要、承诺和未完成事项，并验证重启恢复。
 - [ ] **P5-03b** 重要性自适应衰减与显式归档/恢复代码及合成标注排序回归已实现（importance=0.5保持既有衰减曲线；归档只处理未过期、已批准、低重要性、非敏感、无 conflict_key 的老记录；恢复回待审；38 项记忆测试通过）。仍未完成真实标注语料的排序校准与阈值评估，故本项不勾选；这不是实测效果或已校准模型。
 - [ ] **P5-04** 实现后台候选流程：抽取→证据定位→分类→去重→冲突/敏感检测→状态流转。已完成离线接线基础：新增 `capture_message.py` 私聊纯文本 envelope 解析；`memory_capture.py` 有界内存队列、严格JSON/原文引句验证、敏感拒绝及待审候选写入；MaiBot `chat.receive.before_process` OBSERVE Hook 只接受显式 `session_id` 白名单，拒绝群聊/媒体，调用配置模型任务于后台抽取，默认关闭，卸载/配置更新清空队列；`MemoryItem.evidence_quotes` 仅待审保存、批准时清空。7 项插件接线测试通过，全量114项测试、compileall 与 git diff --check 通过。仍未在真实 MaiBot/微信主机上验收；模型质量、持久化/A-Memorix接入、后台审核/过期策略及冲突语义仍未完成，故任务保持未勾选。
-- [x] **P5-04v** 实现默认关闭的只读Unix socket服务端和本机CLI（list/get），固定会话范围、SO_PEERCRED UID/主GID授权、原子待审快照、权限/路径检查及有界JSONL；插件加载/热更新/卸载接线完成。新增20项专测；Linux隔离全134项通过，Windows124通过/10跳过；NAS同版镜像134项全过，宿主CLI、跨UID/主GID授权、停止/重绑和清理实测通过，生产前后状态与配置结构摘要一致（[验收报告](docs/nas_viewer_acceptance.md)）。未部署生产或验收真实微信，不代表P5-04整体完成。见 [权限与命令说明](docs/unix_socket_candidate_viewer.md)。
+- [x] **P5-04v** 实现默认关闭的只读Unix socket服务端和本机CLI（list/get），固定会话范围、SO_PEERCRED UID/主GID授权、原子待审快照、权限/路径检查及有界JSONL；插件加载/热更新/卸载接线完成。新增20项专测；Linux隔离全134项通过，Windows124通过/10跳过；NAS同版镜像134项全过，宿主CLI、跨UID/主GID授权、停止/重绑和清理实测通过，生产前后状态与配置结构摘要一致（历史验收报告为仓库外私密材料，公开仓库不提供该文件；上述现场结果本轮未重新验证）。未部署生产或验收真实微信，不代表P5-04整体完成。见 [权限与命令说明](docs/unix_socket_candidate_viewer.md)。
 - [ ] **P5-05b** 聊天中不打断审核；含糊、敏感、冲突、证据不足候选静默隔离或过期。
 - [x] **P5-06** 核验 MaiBot v1.4.5（官方 tag `478f671e`）与插件 SDK API 契约：SDK v2.23.0 的跨插件调用要求提供方声明 `@API(..., public=True)`；A_Memorix 插件只声明 LLM `@Tool`，未声明 public API。`MemoryService` / `a_memorix_host_service.invoke` 是宿主内部实现，WebUI `/api/webui/memory/*` 是控制台路由，均非第三方插件稳定记忆契约；插件运行于独立 Runner，不能直接 import `src.*`。结论：当前无受支持的第三方直接记忆读写API；不私连数据库、不依赖内部 Python 对象或 WebUI endpoint。若要集成，需 MaiBot/A_Memorix 上游提供版本化 public API 或正式 SDK capability。证据：MaiBot [v1.4.5 A_Memorix plugin](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/A_memorix/plugin.py)、[host service](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/A_memorix/host_service.py)、[memory service](https://github.com/Mai-with-u/MaiBot/blob/v1.4.5/src/services/memory_service.py)、[SDK v2.23.0 guide](https://github.com/Mai-with-u/maibot-plugin-sdk/blob/v2.23.0/docs/guide.md)。
 - [ ] **P5-07** 仅在接口验证、类别预授权、证据充分、无冲突且幂等时写入；当前 MaiBot v1.4.5/A_Memorix 未公开插件记忆读写API，故禁止直连内部服务、数据库或 WebUI endpoint；在上游提供版本化 public API/SDK capability 前，只保留本地待审候选或跳过，不接入记忆写入。
@@ -126,6 +126,9 @@
 - [ ] **P8-07** 编写安装、配置、升级、故障排除、回滚与数据删除文档。
 - [ ] **P8-08** 更新版本号/manifest/变更日志，打包并验证包内路径与安装结构。
 - [ ] **P8-09** 发布前检查 Git diff、许可证、第三方引用、秘密扫描、测试和构建状态。
+
+## 审核修复记录
+- 2026-11-20：小范围修复代码标记整轮保护、带引句候选合并/隔离、SubQ 异步凭据解析超时和零额度拒绝、远端 E2E 证据脱敏；新增合成回归测试，不新增业务验收勾选。行为变化、验证命令及边界见 [审核修复记录](docs/validation/AUDIT_FIXES_2026-11-20.md)。
 
 ## 已知依赖与阻塞
 - MaiBot 1.4.5 的 Hook/SDK 实际能力、A-Memorix 公开接口及模型调用接口需逐项实测。

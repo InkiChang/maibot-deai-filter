@@ -170,6 +170,9 @@ class MemoryStore:
                         expiry = min((x for x in expiry_values if x is not None), default=None)
                         self._items[(scope, digest)] = replace(
                             existing, evidence_refs=refs,
+                            # A quote has no per-reference mapping in this schema.
+                            # Retain it only while the single reference is unchanged.
+                            evidence_quotes=existing.evidence_quotes if len(refs) == 1 else (),
                             confidence=max(existing.confidence, item.confidence),
                             importance=max(existing.importance, item.importance),
                             expires_at=expiry,
@@ -192,8 +195,8 @@ class MemoryStore:
             return item
         for key, existing in group:
             if existing.status != "quarantined":
-                self._items[key] = replace(existing, status="quarantined")
-        return replace(item, status="quarantined")
+                self._items[key] = replace(existing, status="quarantined", evidence_quotes=())
+        return replace(item, status="quarantined", evidence_quotes=())
 
     def _reconcile_conflicts(self, scope: OwnerScope, domain: str, conflict_key: str) -> None:
         group = [(key, item) for key, item in self._items.items()
@@ -204,7 +207,7 @@ class MemoryStore:
         if len(distinct) > 1:
             for key, item in group:
                 if item.status != "quarantined":
-                    self._items[key] = replace(item, status="quarantined")
+                    self._items[key] = replace(item, status="quarantined", evidence_quotes=())
         else:
             for key, item in group:
                 if item.status == "quarantined":

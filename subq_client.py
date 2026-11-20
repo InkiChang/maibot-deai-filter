@@ -78,6 +78,8 @@ class SubQBudget:
                 self._requests = self._tokens = 0
                 self._cost = Decimal("0")
             req_limit, token_limit, cost_limit = self._limits
+            if req_limit <= 0 or token_limit <= 0 or cost_limit <= 0:
+                raise SubQClientError("SubQ budget is disabled by a zero limit", category="budget")
             next_cost = self._cost + Decimal(str(estimated_cost))
             if (self._requests + 1 > req_limit or self._tokens + estimated_tokens > token_limit
                     or next_cost > cost_limit):
@@ -176,7 +178,11 @@ def parse_chat_response(response: SubQHttpResponse) -> str:
 
 
 class SubQClient:
-    """Small async client core with injected transport and secret resolver."""
+    """Small async client core with injected transport and secret resolver.
+
+    Synchronous resolvers must be nonblocking. Awaitable resolvers must cooperate
+    with cancellation; they share the transport's total monotonic deadline.
+    """
 
     def __init__(self, config: SubQConfig, transport: Transport,
                  credential_resolver: CredentialResolver, budget: SubQBudget | None = None):
@@ -208,7 +214,9 @@ class SubQClient:
                 try:
                     secret = self._credential_resolver(self._config.credential_ref)
                     if hasattr(secret, "__await__"):
-                        secret = await secret
+                        secret = await asyncio.wait_for(secret, timeout=max(0, deadline - loop.time()))
+                except asyncio.TimeoutError:
+                    raise SubQClientError("SubQ credential resolution timed out", category="timeout") from None
                 except asyncio.CancelledError:
                     raise
                 except Exception:

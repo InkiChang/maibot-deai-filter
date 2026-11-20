@@ -303,8 +303,17 @@ def dedupe_paragraphs(texts: list[str], *, threshold: float = 0.75, min_len: int
 _DOT_END_RE = re.compile(r"(?<![。.])。$")
 
 
+def contains_code_markup(text: str) -> bool:
+    """Conservatively preserve whole replies with backticks or tilde fences.
+
+    Whole-reply bypass also protects fences split across host segments. Bare
+    unmarked code cannot be reliably distinguished from prose by this filter.
+    """
+    return "`" in text or bool(re.search(r"(?m)^\s*~{3,}", text))
+
+
 def deai_text(text: str, opts: DeAiOptions, changes: set[str] | None = None) -> str:
-    if not opts.enabled:
+    if not opts.enabled or contains_code_markup(text):
         return text
     marks = set() if changes is None else changes
     t = str(text or "")

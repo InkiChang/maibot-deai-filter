@@ -21,7 +21,7 @@ if str(PLUGIN_DIR) not in sys.path:
 from maibot_sdk import HookHandler, MaiBotPlugin
 from maibot_sdk.types import ErrorPolicy, HookMode, HookOrder
 
-from deai import DeAiOptions, deai_text, dedupe_paragraphs
+from deai import DeAiOptions, contains_code_markup, deai_text, dedupe_paragraphs
 from capture_message import private_text_envelope
 from memory_capture import MemoryCaptureQueue
 from memory_store import MemoryStore, OwnerScope
@@ -254,6 +254,12 @@ class DeAiFilterPlugin(MaiBotPlugin):
         try:
             options = self._options()
             if not options.enabled or not isinstance(segments, list) or not segments:
+                return {"action": "continue"}
+
+            # A fence may span multiple host segments. Bypass the entire reply,
+            # including trimming and deduplication, if any segment signals code.
+            if any(isinstance(s, dict) and isinstance(s.get("text"), str)
+                   and contains_code_markup(s["text"]) for s in segments):
                 return {"action": "continue"}
 
             marks: set[str] = set()

@@ -141,7 +141,7 @@ def main() -> int:
         ("think tag removed", "<think>先想一下</think>答案。", "答案"),
         ("single ordinal preserved", "首先，先坐下。", "首先，先坐下"),
         ("multiple ordinals removed", "首先，先坐下。其次，再喝水。", "先坐下。再喝水"),
-        ("fenced numbered list", "```\n1. item\n2. next\n```", "item\nnext"),
+        ("fenced numbered list preserved", "```\n1. item\n2. next\n```", "```\n1. item\n2. next\n```"),
         ("ordinary short parentheticals preserved", "（笑）（小声）今天真冷。", "（笑）（小声）今天真冷"),
         ("action parenthetical removed", "（揉了揉眼睛）今天真冷。", "今天真冷"),
         ("single em-dash preserved", "我想说——算了。", "我想说——算了"),

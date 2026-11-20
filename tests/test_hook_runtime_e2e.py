@@ -15,6 +15,17 @@ LIFECYCLE_FIXTURE = BASE / "tests" / "fixtures" / "lifecycle_runtime_e2e.py"
 
 class HookRuntimeE2ETests(unittest.TestCase):
     def _run_isolated(self, fixture, marker):
+        # Catch at the public test boundary: library exceptions may embed host
+        # names, fingerprints, private paths or raw remote output.
+        failed = False
+        try:
+            self._run_isolated_private(fixture, marker)
+        except Exception:
+            failed = True
+        if failed:
+            self.fail("Isolated E2E failed; private diagnostics withheld")
+
+    def _run_isolated_private(self, fixture, marker):
         try:
             import paramiko
         except ImportError as exc:
@@ -50,7 +61,7 @@ class HookRuntimeE2ETests(unittest.TestCase):
             err = stderr.read().decode("utf-8", "replace")
             status = stdout.channel.recv_exit_status()
             if status:
-                raise AssertionError(f"remote exit {status}: {out[-3000:]} {err[-2000:]}")
+                raise AssertionError(f"remote command failed with exit {status}; output withheld")
             return out
 
         def state():
@@ -61,7 +72,6 @@ class HookRuntimeE2ETests(unittest.TestCase):
 
         try:
             before = state()
-            evidence["production_before"] = before
             run("mkdir -m 755 " + q(remote))
             sftp = client.open_sftp()
             files = [p for p in BASE.glob("*.py") if not p.name.startswith("nas_")]
@@ -85,8 +95,8 @@ class HookRuntimeE2ETests(unittest.TestCase):
                 + q(image) + " /test/" + q(fixture.name)
             )
             _stdin, stdout, stderr = client.exec_command(command, timeout=180)
-            evidence["stdout"] = stdout.read().decode("utf-8", "replace")
-            evidence["stderr"] = stderr.read().decode("utf-8", "replace")
+            private_stdout = stdout.read().decode("utf-8", "replace")
+            stderr.read()  # Drain, never export remote diagnostics.
             code = stdout.channel.recv_exit_status()
             inspection = json.loads(run("docker inspect --format '{{json .}}' " + q(container)))
             hc = inspection["HostConfig"]
@@ -97,14 +107,14 @@ class HookRuntimeE2ETests(unittest.TestCase):
             self.assertIn("no-new-privileges", hc["SecurityOpt"])
             self.assertTrue(mounts)
             self.assertTrue(all(m["Source"] == remote and m["Destination"] == "/test" and not m["RW"] for m in mounts))
-            self.assertEqual(code, 0, evidence["stdout"] + "\n" + evidence["stderr"])
-            self.assertIn(marker, evidence["stdout"])
+            self.assertEqual(code, 0, "Isolated fixture failed")
+            self.assertTrue(marker in private_stdout, "Isolated fixture marker absent")
+            evidence["fixture_passed"] = True
         finally:
             try:
                 run("docker rm -f " + q(container) + " >/dev/null 2>&1 || true")
                 run("rm -rf -- " + q(remote))
-                evidence["production_after"] = state()
-                evidence["production_unchanged"] = evidence["production_after"] == before
+                evidence["production_unchanged"] = state() == before
             finally:
                 client.close()
         self.assertTrue(evidence["production_unchanged"], evidence)
